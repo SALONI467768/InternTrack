@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Account — InternTrack AI{% endblock %}
+
+{% block layout %}
+<div class="min-h-screen bg-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-brand-500 selection:text-white">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <a href="/" class="inline-flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/30">
+                <i data-lucide="compass" class="w-6 h-6"></i>
+            </div>
+            <span class="font-bold text-2xl text-white tracking-tight">InternTrack<span class="text-brand-400">.ai</span></span>
+        </a>
+        <h2 class="text-2xl font-bold tracking-tight text-white">Create your account</h2>
+        <p class="mt-2 text-sm text-slate-400">Empower your internship search with intelligent tracking</p>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
+        <div class="bg-slate-800/80 border border-slate-700/80 py-8 px-6 shadow-2xl rounded-2xl sm:px-10 backdrop-blur">
+            <form id="register-form" class="space-y-4" onsubmit="handleRegisterSubmit(event)">
+                <div>
+                    <label for="full_name" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Full Name</label>
+                    <input id="full_name" name="full_name" type="text" required
+                           class="w-full px-4 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                           placeholder="Alex Morgan">
+                </div>
+
+                <div>
+                    <label for="email" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Email Address</label>
+                    <input id="email" name="email" type="email" required
+                           class="w-full px-4 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                           placeholder="alex@university.edu">
+                </div>
+
+                <div>
+                    <label for="password" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Password</label>
+                    <input id="password" name="password" type="password" required minlength="8"
+                           class="w-full px-4 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                           placeholder="Min. 8 characters">
+                </div>
+
+                <div>
+                    <label for="password_confirm" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Confirm Password</label>
+                    <input id="password_confirm" name="password_confirm" type="password" required minlength="8"
+                           class="w-full px-4 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                           placeholder="Re-enter password">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Role</label>
+                    <select id="role" name="role" class="w-full px-4 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm">
+                        <option value="STUDENT">Student / Internship Candidate</option>
+                        <option value="ADMIN">Platform Administrator</option>
+                    </select>
+                </div>
+
+                <div id="register-error" class="hidden text-xs text-rose-400 bg-rose-950/50 border border-rose-800 p-3 rounded-xl font-medium"></div>
+
+                <div class="pt-2">
+                    <button id="register-btn" type="submit"
+                            class="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold text-white bg-brand-600 hover:bg-brand-500 shadow-lg shadow-brand-600/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all">
+                        <span>Create Account</span>
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-6 text-center text-xs text-slate-400">
+                Already have an account?
+                <a href="/login/" class="font-semibold text-brand-400 hover:text-brand-300 ml-1">Sign in</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    async function handleRegisterSubmit(event) {
+        event.preventDefault();
+        const btn = document.getElementById('register-btn');
+        const errEl = document.getElementById('register-error');
+        errEl.classList.add('hidden');
+
+        const full_name = document.getElementById('full_name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const password_confirm = document.getElementById('password_confirm').value;
+        const role = document.getElementById('role').value;
+
+        if (password !== password_confirm) {
+            errEl.textContent = 'Passwords do not match.';
+            errEl.classList.remove('hidden');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Creating account...</span>`;
+        lucide.createIcons();
+
+        try {
+            const res = await api.post('/api/auth/register/', {
+                full_name,
+                email,
+                password,
+                password_confirm,
+                role
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                api.setSession(data.tokens, data.user);
+                showToast('Registration successful! Welcome to InternTrack AI.', 'success');
+                setTimeout(() => window.location.href = '/dashboard/', 600);
+            } else {
+                let msg = 'Registration failed.';
+                if (data.email) msg = Array.isArray(data.email) ? data.email[0] : data.email;
+                else if (data.password) msg = Array.isArray(data.password) ? data.password[0] : data.password;
+                errEl.textContent = msg;
+                errEl.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerHTML = `<span>Create Account</span>`;
+            }
+        } catch (e) {
+            errEl.textContent = 'Network error during registration.';
+            errEl.classList.remove('hidden');
+            btn.disabled = false;
+            btn.innerHTML = `<span>Create Account</span>`;
+        }
+    }
+</script>
+{% endblock %}

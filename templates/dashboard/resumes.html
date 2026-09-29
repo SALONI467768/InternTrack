@@ -1,0 +1,340 @@
+{% extends 'base.html' %}
+
+{% block title %}Resume Management & Score — InternTrack AI{% endblock %}
+{% block header_title %}Resume Analyzer & ATS Coverage{% endblock %}
+{% block header_subtitle %}Extract structured skills, evaluate section completeness, and review your InternTrack Match Score{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-5xl">
+
+    <!-- Upload Resume Card -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-2 flex items-center gap-2">
+            <i data-lucide="upload-cloud" class="w-4 h-4 text-brand-600"></i>
+            <span>Upload New Resume</span>
+        </h3>
+        <p class="text-xs text-slate-500 mb-4">Upload your resume in PDF or DOCX format (Max 10MB). Text is extracted and evaluated automatically.</p>
+
+        <form id="resume-upload-form" onsubmit="submitResumeUpload(event)" class="space-y-4">
+            <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-brand-500 transition-colors bg-slate-50/50 cursor-pointer"
+                 onclick="document.getElementById('file-input').click()">
+                <i data-lucide="file-text" class="w-10 h-10 text-slate-400 mx-auto mb-2"></i>
+                <div class="text-xs font-semibold text-slate-700">Click to choose a file or drag & drop here</div>
+                <div class="text-[11px] text-slate-400 mt-1">PDF, DOCX, or TXT</div>
+                <input id="file-input" type="file" required accept=".pdf,.docx,.txt" class="hidden" onchange="handleFileSelected(event)">
+                <div id="selected-file-name" class="mt-2 text-xs font-bold text-brand-600 hidden font-mono"></div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2">
+                <label class="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                    <input id="is-primary-checkbox" type="checkbox" checked class="rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+                    <span>Set as primary resume for job matching</span>
+                </label>
+                <button type="submit" id="upload-btn"
+                        class="px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center gap-2">
+                    <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                    <span>Upload & Score</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Active / Primary Resume Analysis Showcase -->
+    <div id="primary-resume-card" class="hidden bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+            <div>
+                <div class="flex items-center gap-2">
+                    <h3 id="res-file-name" class="text-lg font-bold text-slate-900">--</h3>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 text-brand-800 uppercase tracking-wider font-mono">Primary Resume</span>
+                </div>
+                <div class="text-xs text-slate-400 mt-1" id="res-date">Uploaded --</div>
+            </div>
+
+            <!-- Big Score Badge -->
+            <div class="flex items-center gap-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <div class="text-right">
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">InternTrack Score</div>
+                    <div id="res-score-badge" class="text-3xl font-black text-brand-600 font-mono">--/100</div>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-brand-500/10 text-brand-600 flex items-center justify-center font-bold">
+                    <i data-lucide="award" class="w-6 h-6"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Score Breakdown Bars -->
+        <div>
+            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Explainable Score Breakdown</h4>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div class="text-[11px] text-slate-500 font-medium">Skills Coverage</div>
+                    <div id="break-skills" class="text-lg font-bold text-slate-900 mt-1 font-mono">--%</div>
+                    <div class="w-full bg-slate-200 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div id="bar-break-skills" class="bg-brand-500 h-full rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div class="text-[11px] text-slate-500 font-medium">Projects Quality</div>
+                    <div id="break-projects" class="text-lg font-bold text-slate-900 mt-1 font-mono">--%</div>
+                    <div class="w-full bg-slate-200 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div id="bar-break-projects" class="bg-sky-500 h-full rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div class="text-[11px] text-slate-500 font-medium">Keywords Quality</div>
+                    <div id="break-keywords" class="text-lg font-bold text-slate-900 mt-1 font-mono">--%</div>
+                    <div class="w-full bg-slate-200 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div id="bar-break-keywords" class="bg-emerald-500 h-full rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div class="text-[11px] text-slate-500 font-medium">Education Section</div>
+                    <div id="break-education" class="text-lg font-bold text-slate-900 mt-1 font-mono">--%</div>
+                    <div class="w-full bg-slate-200 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div id="bar-break-education" class="bg-indigo-500 h-full rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div class="text-[11px] text-slate-500 font-medium">Experience Section</div>
+                    <div id="break-experience" class="text-lg font-bold text-slate-900 mt-1 font-mono">--%</div>
+                    <div class="w-full bg-slate-200 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div id="bar-break-experience" class="bg-purple-500 h-full rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detected Skills -->
+        <div>
+            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Detected Technical Skills</h4>
+            <div id="res-detected-skills" class="flex flex-wrap gap-1.5">
+                <span class="text-xs text-slate-400">None detected.</span>
+            </div>
+        </div>
+
+        <!-- Actionable Improvement Suggestions -->
+        <div class="bg-amber-50/60 border border-amber-200 p-4 rounded-xl">
+            <h4 class="text-xs font-bold text-amber-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-amber-600"></i>
+                <span>Actionable Improvement Suggestions</span>
+            </h4>
+            <ul id="res-suggestions-list" class="space-y-1 text-xs text-amber-800 list-disc list-inside">
+                <li>No suggestions available.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- All Uploaded Resumes Table -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-100 font-bold text-xs uppercase text-slate-700 tracking-wider">
+            All Uploaded Resumes
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-400 font-semibold uppercase tracking-wider">
+                        <th class="py-3 px-4">Filename</th>
+                        <th class="py-3 px-4">Match Score</th>
+                        <th class="py-3 px-4">Skills Detected</th>
+                        <th class="py-3 px-4">Status</th>
+                        <th class="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="resumes-table-body" class="divide-y divide-slate-100 text-slate-700">
+                    <tr><td colspan="5" class="py-6 text-center text-slate-400">Loading resumes...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let resumeList = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadResumes();
+    });
+
+    function handleFileSelected(event) {
+        const file = event.target.files[0];
+        const display = document.getElementById('selected-file-name');
+        if (file) {
+            display.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+            display.classList.remove('hidden');
+        }
+    }
+
+    async function loadResumes() {
+        try {
+            const res = await api.get('/api/resumes/');
+            if (!res.ok) return;
+            const data = await res.json();
+            resumeList = Array.isArray(data) ? data : (data.results || []);
+            renderResumes(resumeList);
+
+            // If resumes exist, fetch details of primary resume
+            const primary = resumeList.find(r => r.is_primary) || resumeList[0];
+            if (primary) {
+                loadPrimaryResumeDetail(primary.id);
+            }
+        } catch (e) {
+            console.error('Error loading resumes:', e);
+        }
+    }
+
+    async function loadPrimaryResumeDetail(resumeId) {
+        try {
+            const res = await api.get(`/api/resumes/${resumeId}/`);
+            if (!res.ok) return;
+            const resume = await res.json();
+
+            const card = document.getElementById('primary-resume-card');
+            card.classList.remove('hidden');
+
+            document.getElementById('res-file-name').textContent = resume.file_name;
+            document.getElementById('res-date').textContent = `Uploaded on ${new Date(resume.created_at).toLocaleDateString()}`;
+            document.getElementById('res-score-badge').textContent = `${resume.match_score}/100`;
+
+            const b = resume.score_breakdown || {};
+            document.getElementById('break-skills').textContent = `${b.skills || 0}%`;
+            document.getElementById('bar-break-skills').style.width = `${b.skills || 0}%`;
+
+            document.getElementById('break-projects').textContent = `${b.projects || 0}%`;
+            document.getElementById('bar-break-projects').style.width = `${b.projects || 0}%`;
+
+            document.getElementById('break-keywords').textContent = `${b.keywords || 0}%`;
+            document.getElementById('bar-break-keywords').style.width = `${b.keywords || 0}%`;
+
+            document.getElementById('break-education').textContent = `${b.education || 0}%`;
+            document.getElementById('bar-break-education').style.width = `${b.education || 0}%`;
+
+            document.getElementById('break-experience').textContent = `${b.experience || 0}%`;
+            document.getElementById('bar-break-experience').style.width = `${b.experience || 0}%`;
+
+            // Skills tags
+            const skillsContainer = document.getElementById('res-detected-skills');
+            if (resume.resume_skills && resume.resume_skills.length) {
+                skillsContainer.innerHTML = resume.resume_skills.map(s => `
+                    <span class="px-2.5 py-0.5 rounded-lg bg-brand-50 border border-brand-200 text-brand-700 font-semibold text-xs">
+                        ${s.skill_name}
+                    </span>
+                `).join('');
+            } else {
+                skillsContainer.innerHTML = `<span class="text-xs text-slate-400">No specific skills detected.</span>`;
+            }
+
+            // Suggestions
+            const suggList = document.getElementById('res-suggestions-list');
+            if (resume.improvement_suggestions && resume.improvement_suggestions.length) {
+                suggList.innerHTML = resume.improvement_suggestions.map(s => `<li>${s}</li>`).join('');
+            } else {
+                suggList.innerHTML = `<li>Resume formatting meets standard ATS criteria.</li>`;
+            }
+
+            lucide.createIcons();
+        } catch (e) {
+            console.error('Error fetching primary resume detail:', e);
+        }
+    }
+
+    function renderResumes(list) {
+        const tbody = document.getElementById('resumes-table-body');
+        if (!tbody) return;
+
+        if (list.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">No resumes uploaded yet.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = list.map(r => `
+            <tr class="hover:bg-slate-50 transition-colors">
+                <td class="py-3 px-4 font-bold text-slate-900">${r.file_name}</td>
+                <td class="py-3 px-4 font-mono font-bold text-brand-600">${r.match_score}/100</td>
+                <td class="py-3 px-4 text-slate-500">${r.skills_count} skills</td>
+                <td class="py-3 px-4">
+                    ${r.is_primary ? `
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 text-brand-800">Primary</span>
+                    ` : `
+                        <button onclick="setPrimaryResume('${r.id}')" class="text-xs text-slate-500 hover:text-brand-600 font-medium">Make Primary</button>
+                    `}
+                </td>
+                <td class="py-3 px-4 text-right space-x-2">
+                    <button onclick="deleteResume('${r.id}')" class="text-rose-600 hover:text-rose-700 font-semibold text-xs">Delete</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function submitResumeUpload(event) {
+        event.preventDefault();
+        const fileInput = document.getElementById('file-input');
+        const isPrimary = document.getElementById('is-primary-checkbox').checked;
+        const btn = document.getElementById('upload-btn');
+
+        if (!fileInput.files.length) {
+            showToast('Please select a file to upload.', 'warning');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('is_primary', isPrimary);
+
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Analyzing with AI...</span>`;
+        lucide.createIcons();
+
+        try {
+            const res = await api.post('/api/resumes/', formData);
+            if (res.ok) {
+                showToast('Resume uploaded and scored successfully!', 'success');
+                fileInput.value = '';
+                document.getElementById('selected-file-name').classList.add('hidden');
+                loadResumes();
+                fetchProfileCompletion();
+            } else {
+                const err = await res.json();
+                showToast(err.file ? err.file[0] : 'Failed to upload resume', 'error');
+            }
+        } catch (e) {
+            showToast('Network error uploading resume', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="upload" class="w-3.5 h-3.5"></i><span>Upload & Score</span>`;
+            lucide.createIcons();
+        }
+    }
+
+    async function setPrimaryResume(id) {
+        try {
+            const res = await api.post(`/api/resumes/${id}/set-primary/`);
+            if (res.ok) {
+                showToast('Primary resume updated.', 'success');
+                loadResumes();
+            }
+        } catch (e) {
+            showToast('Error updating primary resume', 'error');
+        }
+    }
+
+    async function deleteResume(id) {
+        if (!confirm('Are you sure you want to delete this resume?')) return;
+        try {
+            const res = await api.delete(`/api/resumes/${id}/`);
+            if (res.ok) {
+                showToast('Resume deleted.', 'info');
+                loadResumes();
+            }
+        } catch (e) {
+            showToast('Failed to delete resume', 'error');
+        }
+    }
+</script>
+{% endblock %}

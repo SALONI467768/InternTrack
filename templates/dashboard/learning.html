@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}Learning Roadmap — InternTrack AI{% endblock %}
+{% block header_title %}Skill Gap Learning Roadmap{% endblock %}
+{% block header_subtitle %}Structured 5-week milestones designed to bridge missing requirements for your target role{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-5xl">
+
+    <!-- Roadmap Header & Progress Card -->
+    <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-xs font-semibold uppercase tracking-wider mb-2">
+                <i data-lucide="map" class="w-3.5 h-3.5"></i>
+                <span>Custom Curriculum</span>
+            </div>
+            <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+                Role Track: <span id="roadmap-target-role" class="text-brand-600">--</span>
+            </h2>
+            <p class="text-xs text-slate-500 mt-1 max-w-xl">
+                Weekly goals, recommended hands-on practice projects, and estimated effort hours.
+            </p>
+        </div>
+
+        <!-- Progress Counter -->
+        <div class="flex items-center gap-6 bg-slate-50 p-4 rounded-2xl border border-slate-100 shrink-0">
+            <div>
+                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Curriculum Progress</div>
+                <div id="roadmap-pct-text" class="text-3xl font-black text-brand-600 font-mono">--%</div>
+                <div id="roadmap-tasks-ratio" class="text-[10px] text-slate-400 font-medium">0 of 0 tasks done</div>
+            </div>
+            <button onclick="regenerateRoadmap()" title="Regenerate roadmap based on updated skill gaps"
+                    class="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-brand-600 transition-colors">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden shadow-inner">
+        <div id="roadmap-progress-bar" class="bg-gradient-to-r from-brand-600 via-indigo-600 to-emerald-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+    </div>
+
+    <!-- Weekly Tasks Timeline Cards -->
+    <div id="roadmap-tasks-list" class="space-y-4">
+        <div class="text-xs text-slate-400 py-6 text-center">Loading personalized curriculum...</div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        loadRoadmap();
+    });
+
+    async function loadRoadmap() {
+        try {
+            const res = await api.get('/api/learning/roadmap/');
+            if (!res.ok) return;
+            const roadmap = await res.json();
+
+            document.getElementById('roadmap-target-role').textContent = roadmap.target_role;
+            document.getElementById('roadmap-pct-text').textContent = `${roadmap.progress_percentage}%`;
+            document.getElementById('roadmap-tasks-ratio').textContent = `${roadmap.completed_tasks} of ${roadmap.total_tasks} completed`;
+            document.getElementById('roadmap-progress-bar').style.width = `${roadmap.progress_percentage}%`;
+
+            renderTasks(roadmap.tasks);
+        } catch (e) {
+            console.error('Error loading roadmap:', e);
+        }
+    }
+
+    function renderTasks(tasks) {
+        const container = document.getElementById('roadmap-tasks-list');
+        if (!container) return;
+
+        if (!tasks || tasks.length === 0) {
+            container.innerHTML = `<div class="text-xs text-slate-400 py-6 text-center">No tasks generated. Click the refresh button above.</div>`;
+            return;
+        }
+
+        const priorityColors = {
+            'CRITICAL': 'bg-rose-50 text-rose-700 border-rose-200',
+            'IMPORTANT': 'bg-amber-50 text-amber-700 border-amber-200',
+            'OPTIONAL': 'bg-slate-50 text-slate-700 border-slate-200'
+        };
+
+        const statusClasses = {
+            'COMPLETED': 'bg-emerald-50 border-emerald-300 text-emerald-900',
+            'IN_PROGRESS': 'bg-brand-50 border-brand-300 text-brand-900',
+            'NOT_STARTED': 'bg-white border-slate-200 text-slate-800'
+        };
+
+        container.innerHTML = tasks.map(task => `
+            <div class="p-6 rounded-2xl border shadow-sm transition-all ${statusClasses[task.status] || 'bg-white border-slate-200'}">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-900 text-white font-mono uppercase">
+                            Week ${task.week_number}
+                        </span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border ${priorityColors[task.priority] || ''}">
+                            ${task.priority_display}
+                        </span>
+                        <span class="text-xs text-slate-500 font-mono">~${task.estimated_hours} hours</span>
+                    </div>
+
+                    <!-- Status Selector -->
+                    <select onchange="updateTaskStatus('${task.id}', this.value)" class="text-xs px-3 py-1.5 rounded-lg border border-slate-300 bg-white font-semibold focus:ring-2 focus:ring-brand-500">
+                        <option value="NOT_STARTED" ${task.status === 'NOT_STARTED' ? 'selected' : ''}>Not Started</option>
+                        <option value="IN_PROGRESS" ${task.status === 'IN_PROGRESS' ? 'selected' : ''}>In Progress</option>
+                        <option value="COMPLETED" ${task.status === 'COMPLETED' ? 'selected' : ''}>Completed ✓</option>
+                    </select>
+                </div>
+
+                <h3 class="text-base font-bold text-slate-900 mb-1">${task.topic}</h3>
+                <p class="text-xs text-slate-600 leading-relaxed mb-4">${task.description}</p>
+
+                <!-- Hands-on Practice Task Box -->
+                <div class="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/80 text-xs">
+                    <span class="font-bold text-slate-800 block mb-0.5 flex items-center gap-1.5">
+                        <i data-lucide="code-2" class="w-3.5 h-3.5 text-brand-600"></i>
+                        <span>Hands-On Practice Task:</span>
+                    </span>
+                    <p class="text-slate-600 font-mono text-[11px] leading-relaxed">${task.practice_task}</p>
+                </div>
+            </div>
+        `).join('');
+
+        lucide.createIcons();
+    }
+
+    async function updateTaskStatus(taskId, newStatus) {
+        try {
+            const res = await api.patch(`/api/learning/tasks/${taskId}/`, { status: newStatus });
+            if (res.ok) {
+                showToast(`Task updated to ${newStatus.replace('_', ' ')}!`, 'success');
+                loadRoadmap();
+            }
+        } catch (e) {
+            showToast('Error updating task status', 'error');
+        }
+    }
+
+    async function regenerateRoadmap() {
+        if (!confirm('Regenerate your learning roadmap based on updated skill gaps?')) return;
+        try {
+            const res = await api.post('/api/learning/roadmap/regenerate/');
+            if (res.ok) {
+                showToast('Fresh roadmap generated!', 'success');
+                loadRoadmap();
+            }
+        } catch (e) {
+            showToast('Error regenerating roadmap', 'error');
+        }
+    }
+</script>
+{% endblock %}

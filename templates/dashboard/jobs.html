@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Tracked Jobs — InternTrack AI{% endblock %}
+{% block header_title %}Tracked Job Requirements{% endblock %}
+{% block header_subtitle %}Structured requirements, detected tech stacks, and match evaluations{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Action Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="relative min-w-[280px]">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+            <input id="job-search" type="text" placeholder="Search tracked jobs..." oninput="filterJobs()"
+                   class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+        </div>
+
+        <a href="/jobs/add/" class="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all shrink-0">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Add / Parse Job</span>
+        </a>
+    </div>
+
+    <!-- Jobs Grid -->
+    <div id="jobs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="col-span-3 py-12 text-center text-xs text-slate-400">Loading tracked jobs...</div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let allJobs = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadJobs();
+    });
+
+    async function loadJobs() {
+        try {
+            const res = await api.get('/api/jobs/');
+            if (!res.ok) return;
+            const data = await res.json();
+            allJobs = Array.isArray(data) ? data : (data.results || []);
+            renderJobs(allJobs);
+        } catch (e) {
+            console.error('Error fetching jobs:', e);
+        }
+    }
+
+    function renderJobs(list) {
+        const grid = document.getElementById('jobs-grid');
+        if (!grid) return;
+
+        if (list.length === 0) {
+            grid.innerHTML = `
+                <div class="col-span-3 bg-white p-12 rounded-2xl border border-slate-200 text-center">
+                    <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                        <i data-lucide="file-search" class="w-6 h-6"></i>
+                    </div>
+                    <div class="text-sm font-bold text-slate-800">No jobs tracked yet</div>
+                    <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-4">Paste job descriptions to extract required skills and calculate your match score.</p>
+                    <a href="/jobs/add/" class="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg text-xs font-semibold">
+                        Parse First Job Posting
+                    </a>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
+        grid.innerHTML = list.map(job => `
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm saas-card flex flex-col justify-between">
+                <div>
+                    <div class="flex items-start justify-between gap-2 mb-2">
+                        <span class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-mono">
+                            ${job.employment_type === 'INTERNSHIP' ? 'Internship' : 'Full-time'}
+                        </span>
+                        ${job.application_status ? `
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-200">
+                                ${job.application_status}
+                            </span>
+                        ` : ''}
+                    </div>
+
+                    <h4 class="font-bold text-slate-900 text-base leading-snug">${job.title}</h4>
+                    <div class="text-xs font-semibold text-brand-600 mt-0.5">${job.company}</div>
+                    <div class="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+                        <i data-lucide="map-pin" class="w-3 h-3"></i>
+                        <span>${job.location}</span>
+                    </div>
+
+                    <!-- Skills preview -->
+                    <div class="flex flex-wrap gap-1.5 mt-4">
+                        ${(job.skills || []).map(s => `
+                            <span class="px-2 py-0.5 rounded bg-slate-50 border border-slate-200 text-[10px] font-medium text-slate-600">
+                                ${s}
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="pt-5 mt-4 border-t border-slate-100 flex items-center justify-between">
+                    <span class="text-xs font-semibold text-slate-700">${job.salary_range || 'Flexible'}</span>
+                    <a href="/jobs/${job.id}/" class="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1">
+                        <span>Match Analysis</span>
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                    </a>
+                </div>
+            </div>
+        `).join('');
+        lucide.createIcons();
+    }
+
+    function filterJobs() {
+        const query = document.getElementById('job-search').value.toLowerCase().trim();
+        const filtered = allJobs.filter(j => 
+            j.title.toLowerCase().includes(query) ||
+            j.company.toLowerCase().includes(query) ||
+            (j.skills && j.skills.some(s => s.toLowerCase().includes(query)))
+        );
+        renderJobs(filtered);
+    }
+</script>
+{% endblock %}

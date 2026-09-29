@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Instant Resume Text Analyzer — InternTrack AI{% endblock %}
+{% block header_title %}Instant Resume Text Scoring{% endblock %}
+{% block header_subtitle %}Paste any resume text directly to compute your InternTrack Match Score without saving a file{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-4xl">
+
+    <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+        <form onsubmit="submitTextAnalysis(event)" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Resume Text</label>
+                <textarea id="resume-raw-text" rows="10" required
+                          placeholder="Paste your resume contents here (Experience, Education, Projects, Skills)..."
+                          class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" id="analyze-btn"
+                        class="px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-brand-600/20 transition-all flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                    <span>Analyze & Score Text</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Live Preview Result -->
+    <div id="text-result-card" class="hidden bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div>
+                <h3 class="text-lg font-bold text-slate-900">Analysis Results</h3>
+                <span id="detected-candidate-name" class="text-xs text-brand-600 font-semibold">Candidate</span>
+            </div>
+            <div class="text-right">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Match Score</span>
+                <span id="text-score" class="text-3xl font-black text-brand-600 font-mono">--/100</span>
+            </div>
+        </div>
+
+        <div id="text-skills-detected" class="flex flex-wrap gap-1.5"></div>
+
+        <div class="p-4 bg-amber-50 rounded-xl border border-amber-200 text-xs">
+            <h4 class="font-bold text-amber-900 mb-2">Suggestions</h4>
+            <ul id="text-suggestions" class="space-y-1 text-amber-800 list-disc list-inside"></ul>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    async function submitTextAnalysis(event) {
+        event.preventDefault();
+        const text = document.getElementById('resume-raw-text').value.trim();
+        const btn = document.getElementById('analyze-btn');
+
+        btn.disabled = true;
+        btn.textContent = 'Evaluating text...';
+
+        try {
+            const res = await api.post('/api/resumes/analyze-text/', { text });
+            const data = await res.json();
+
+            if (res.ok) {
+                const card = document.getElementById('text-result-card');
+                card.classList.remove('hidden');
+
+                document.getElementById('detected-candidate-name').textContent = data.full_name || 'Candidate';
+                document.getElementById('text-score').textContent = `${data.match_score}/100`;
+
+                const skillsEl = document.getElementById('text-skills-detected');
+                skillsEl.innerHTML = (data.detected_skills || []).map(s => `
+                    <span class="px-2.5 py-0.5 rounded-lg bg-brand-50 border border-brand-200 text-brand-700 text-xs font-semibold">${s}</span>
+                `).join('');
+
+                const suggEl = document.getElementById('text-suggestions');
+                suggEl.innerHTML = (data.improvement_suggestions || []).map(s => `<li>${s}</li>`).join('');
+
+                showToast('Score calculated successfully!', 'success');
+            } else {
+                showToast(data.error || 'Failed to analyze text', 'error');
+            }
+        } catch (e) {
+            showToast('Error analyzing resume text', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="sparkles" class="w-3.5 h-3.5"></i><span>Analyze & Score Text</span>`;
+            lucide.createIcons();
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block title %}Developer Profile — InternTrack AI{% endblock %}
+{% block header_title %}Candidate Profile & Preferences{% endblock %}
+{% block header_subtitle %}Keep your education, portfolio links, and target preferences updated{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-4xl">
+
+    <!-- Profile Completion Status Banner -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-2 mb-1">
+                <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Profile Strength</h3>
+                <span id="profile-pct-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200">--% Complete</span>
+            </div>
+            <p class="text-xs text-slate-500">A completed profile improves resume match precision and unlocks personalized daily recommendations.</p>
+        </div>
+
+        <div class="w-full sm:w-48 bg-slate-100 h-3 rounded-full overflow-hidden shrink-0">
+            <div id="profile-progress-bar" class="bg-gradient-to-r from-brand-500 to-emerald-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <!-- Main Profile Edit Form -->
+    <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+        <form id="profile-form" onsubmit="submitProfileUpdate(event)" class="space-y-6 text-xs sm:text-sm">
+            
+            <!-- Personal Info -->
+            <div>
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Personal & Contact</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Full Name</label>
+                        <input id="prof-name" type="text" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Phone Number</label>
+                        <input id="prof-phone" type="tel" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Location</label>
+                        <input id="prof-location" type="text" placeholder="e.g. San Francisco, CA" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Target Primary Role</label>
+                        <input id="prof-target-role" type="text" placeholder="e.g. Python Backend Developer" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bio -->
+            <div class="pt-4 border-t border-slate-100">
+                <label class="block font-semibold text-slate-700 mb-1">Professional Bio / Summary</label>
+                <textarea id="prof-bio" rows="3" placeholder="Brief summary of your background, technical interests, and goals..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500"></textarea>
+            </div>
+
+            <!-- Education -->
+            <div class="pt-4 border-t border-slate-100">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Academic Background</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">College / University</label>
+                        <input id="prof-college" type="text" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Degree</label>
+                        <input id="prof-degree" type="text" placeholder="e.g. B.S. in Computer Science" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Graduation Year</label>
+                        <input id="prof-grad-year" type="number" placeholder="2026" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Social Links -->
+            <div class="pt-4 border-t border-slate-100">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Portfolio & Social Profiles</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">GitHub Profile URL</label>
+                        <input id="prof-github" type="url" placeholder="https://github.com/..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">LinkedIn Profile URL</label>
+                        <input id="prof-linkedin" type="url" placeholder="https://linkedin.com/in/..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Portfolio Website</label>
+                        <input id="prof-portfolio" type="url" placeholder="https://..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preferences -->
+            <div class="pt-4 border-t border-slate-100">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Job Search Preferences</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Work Mode Preference</label>
+                        <select id="prof-work-mode" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                            <option value="FLEXIBLE">Flexible / Any</option>
+                            <option value="REMOTE">Remote Only</option>
+                            <option value="HYBRID">Hybrid</option>
+                            <option value="ONSITE">On-site</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Expected Salary / Stipend</label>
+                        <input id="prof-salary" type="text" placeholder="e.g. $40/hr or $85,000/yr" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Action -->
+            <div class="pt-4 flex justify-end border-t border-slate-100">
+                <button type="submit" id="save-prof-btn"
+                        class="px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-brand-600/20 transition-all flex items-center gap-2">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                    <span>Save Profile Changes</span>
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        loadProfileData();
+    });
+
+    async function loadProfileData() {
+        try {
+            const res = await api.get('/api/profile/');
+            if (!res.ok) return;
+            const p = await res.json();
+
+            document.getElementById('prof-name').value = p.full_name || '';
+            document.getElementById('prof-phone').value = p.phone || '';
+            document.getElementById('prof-location').value = p.location || '';
+            document.getElementById('prof-target-role').value = p.target_role || '';
+            document.getElementById('prof-bio').value = p.bio || '';
+            document.getElementById('prof-college').value = p.college || '';
+            document.getElementById('prof-degree').value = p.degree || '';
+            document.getElementById('prof-grad-year').value = p.graduation_year || '';
+            document.getElementById('prof-github').value = p.github_url || '';
+            document.getElementById('prof-linkedin').value = p.linkedin_url || '';
+            document.getElementById('prof-portfolio').value = p.portfolio_url || '';
+            document.getElementById('prof-work-mode').value = p.work_mode_preference || 'FLEXIBLE';
+            document.getElementById('prof-salary').value = p.expected_salary || '';
+
+            const pct = p.completion_percentage || 20;
+            document.getElementById('profile-pct-badge').textContent = `${pct}% Complete`;
+            document.getElementById('profile-progress-bar').style.width = `${pct}%`;
+
+            // Update user cache in localStorage
+            const user = api.getUser();
+            if (user) {
+                user.full_name = p.full_name;
+                localStorage.setItem(api.userKey, JSON.stringify(user));
+            }
+        } catch (e) {
+            console.error('Error fetching profile:', e);
+        }
+    }
+
+    async function submitProfileUpdate(event) {
+        event.preventDefault();
+        const btn = document.getElementById('save-prof-btn');
+        btn.disabled = true;
+
+        const payload = {
+            full_name: document.getElementById('prof-name').value.trim(),
+            phone: document.getElementById('prof-phone').value.trim(),
+            location: document.getElementById('prof-location').value.trim(),
+            target_role: document.getElementById('prof-target-role').value.trim(),
+            bio: document.getElementById('prof-bio').value.trim(),
+            college: document.getElementById('prof-college').value.trim(),
+            degree: document.getElementById('prof-degree').value.trim(),
+            graduation_year: document.getElementById('prof-grad-year').value ? parseInt(document.getElementById('prof-grad-year').value) : null,
+            github_url: document.getElementById('prof-github').value.trim(),
+            linkedin_url: document.getElementById('prof-linkedin').value.trim(),
+            portfolio_url: document.getElementById('prof-portfolio').value.trim(),
+            work_mode_preference: document.getElementById('prof-work-mode').value,
+            expected_salary: document.getElementById('prof-salary').value.trim(),
+        };
+
+        try {
+            const res = await api.patch('/api/profile/', payload);
+            if (res.ok) {
+                showToast('Profile updated successfully!', 'success');
+                loadProfileData();
+                fetchProfileCompletion();
+            } else {
+                showToast('Failed to save profile changes', 'error');
+            }
+        } catch (e) {
+            showToast('Network error saving profile', 'error');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+</script>
+{% endblock %}

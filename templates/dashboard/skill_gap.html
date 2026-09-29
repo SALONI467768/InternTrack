@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}Skill Gap Engine — InternTrack AI{% endblock %}
+{% block header_title %}Skill Gap Engine{% endblock %}
+{% block header_subtitle %}Categorize missing technical skills into Critical, Important, and Optional priorities{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-5xl">
+
+    <!-- Overview Banner -->
+    <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-xs font-semibold uppercase tracking-wider mb-2">
+                <i data-lucide="target" class="w-3.5 h-3.5"></i>
+                <span>Role Alignment Matrix</span>
+            </div>
+            <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+                Target Role: <span id="target-role-label" class="text-brand-600">--</span>
+            </h2>
+            <p class="text-xs text-slate-500 mt-1 max-w-xl">
+                Contrasting your current profile and resume against skills demanded across <span id="jobs-count-span" class="font-bold text-slate-700">0</span> tracked positions.
+            </p>
+        </div>
+
+        <a href="/learning/" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-brand-600/20 transition-all shrink-0">
+            <i data-lucide="map" class="w-4 h-4"></i>
+            <span>View 5-Week Roadmap</span>
+        </a>
+    </div>
+
+    <!-- Recommendations Alert -->
+    <div id="recommendations-box" class="bg-brand-50/80 border border-brand-200 p-5 rounded-2xl text-xs text-brand-900 space-y-2">
+        <div class="font-bold uppercase tracking-wider text-[11px] text-brand-700 flex items-center gap-1.5">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+            <span>Strategic Recommendations</span>
+        </div>
+        <div id="recommendations-list" class="space-y-1.5 leading-relaxed">
+            <div>Calculating gap recommendations...</div>
+        </div>
+    </div>
+
+    <!-- The 3 Priority Pillars: Critical, Important, Optional -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Critical Gaps -->
+        <div class="bg-white p-6 rounded-2xl border-2 border-rose-200 shadow-sm flex flex-col">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-xs">!</span>
+                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Critical Gaps</h3>
+                </div>
+                <span id="critical-count" class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800">0</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mb-4">Appear in ≥ 50% of your target postings. High impact on interview callbacks.</p>
+            
+            <div id="critical-list" class="space-y-2 flex-1">
+                <div class="text-xs text-slate-400">Evaluating...</div>
+            </div>
+        </div>
+
+        <!-- Important Gaps -->
+        <div class="bg-white p-6 rounded-2xl border-2 border-amber-200 shadow-sm flex flex-col">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs">•</span>
+                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Important Gaps</h3>
+                </div>
+                <span id="important-count" class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">0</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mb-4">Appear in 20%–49% of target postings. Distinct competitive differentiator.</p>
+            
+            <div id="important-list" class="space-y-2 flex-1">
+                <div class="text-xs text-slate-400">Evaluating...</div>
+            </div>
+        </div>
+
+        <!-- Optional Skills -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs">~</span>
+                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Optional Skills</h3>
+                </div>
+                <span id="optional-count" class="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">0</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mb-4">Appear in &lt; 20% of target postings. Nice-to-have or specialized tools.</p>
+            
+            <div id="optional-list" class="space-y-2 flex-1">
+                <div class="text-xs text-slate-400">Evaluating...</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Fully Matched Skills Section -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+            <span>Current Skills Matching Market Demand</span>
+        </h4>
+        <div id="matched-skills-container" class="flex flex-wrap gap-2 text-xs">
+            <div class="text-slate-400">Checking matched skills...</div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        loadSkillGapAnalysis();
+    });
+
+    async function loadSkillGapAnalysis() {
+        try {
+            const res = await api.get('/api/skills/gap-analysis/');
+            if (!res.ok) return;
+            const data = await res.json();
+
+            document.getElementById('target-role-label').textContent = data.target_role;
+            document.getElementById('jobs-count-span').textContent = data.total_jobs_analyzed;
+
+            const s = data.summary;
+            document.getElementById('critical-count').textContent = s.critical_count;
+            document.getElementById('important-count').textContent = s.important_count;
+            document.getElementById('optional-count').textContent = s.optional_count;
+
+            // Recommendations
+            const recoEl = document.getElementById('recommendations-list');
+            if (data.actionable_recommendations && data.actionable_recommendations.length) {
+                recoEl.innerHTML = data.actionable_recommendations.map(r => `<div>• ${r}</div>`).join('');
+            } else {
+                recoEl.innerHTML = `<div>Your profile demonstrates strong alignment with currently tracked roles.</div>`;
+            }
+
+            // Render Critical
+            const critEl = document.getElementById('critical-list');
+            if (data.critical_gaps.length) {
+                critEl.innerHTML = data.critical_gaps.map(g => `
+                    <div class="p-2.5 rounded-xl bg-rose-50/60 border border-rose-100 flex items-center justify-between text-xs">
+                        <span class="font-bold text-rose-950">${g.skill}</span>
+                        <span class="font-mono text-rose-700 text-[11px]">${g.market_percentage}% demand</span>
+                    </div>
+                `).join('');
+            } else {
+                critEl.innerHTML = `<div class="text-xs text-emerald-600 font-semibold py-2">No critical gaps!</div>`;
+            }
+
+            // Render Important
+            const impEl = document.getElementById('important-list');
+            if (data.important_gaps.length) {
+                impEl.innerHTML = data.important_gaps.map(g => `
+                    <div class="p-2.5 rounded-xl bg-amber-50/60 border border-amber-100 flex items-center justify-between text-xs">
+                        <span class="font-bold text-amber-950">${g.skill}</span>
+                        <span class="font-mono text-amber-700 text-[11px]">${g.market_percentage}% demand</span>
+                    </div>
+                `).join('');
+            } else {
+                impEl.innerHTML = `<div class="text-xs text-slate-400 py-2">No important gaps detected.</div>`;
+            }
+
+            // Render Optional
+            const optEl = document.getElementById('optional-list');
+            if (data.optional_gaps.length) {
+                optEl.innerHTML = data.optional_gaps.map(g => `
+                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
+                        <span class="font-semibold text-slate-800">${g.skill}</span>
+                        <span class="font-mono text-slate-500 text-[11px]">${g.market_percentage}%</span>
+                    </div>
+                `).join('');
+            } else {
+                optEl.innerHTML = `<div class="text-xs text-slate-400 py-2">No optional skills recorded.</div>`;
+            }
+
+            // Render Matched
+            const matchEl = document.getElementById('matched-skills-container');
+            if (data.matched_skills.length) {
+                matchEl.innerHTML = data.matched_skills.map(m => `
+                    <span class="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold text-xs flex items-center gap-1.5">
+                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                        <span>${m.skill}</span>
+                    </span>
+                `).join('');
+            } else {
+                matchEl.innerHTML = `<div class="text-xs text-slate-400">Add verified skills to your profile to evaluate matches.</div>`;
+            }
+
+            lucide.createIcons();
+        } catch (e) {
+            console.error('Error fetching skill gap data:', e);
+        }
+    }
+</script>
+{% endblock %}

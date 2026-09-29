@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block title %}Career Report — InternTrack AI{% endblock %}
+{% block header_title %}Career Intelligence Report{% endblock %}
+{% block header_subtitle %}Comprehensive portfolio summary, application metrics, and PDF export{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-5xl">
+
+    <!-- Action Bar -->
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+            <span class="text-xs font-bold text-slate-700">Exportable Career Report</span>
+            <p class="text-[11px] text-slate-500">Download formatted PDF document suitable for mentors, career advisors, and review.</p>
+        </div>
+        <a href="/api/core/report/pdf/" target="_blank"
+           class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Download PDF Report</span>
+        </a>
+    </div>
+
+    <!-- Live Report Document Preview -->
+    <div class="bg-white p-8 sm:p-12 rounded-2xl border border-slate-200 shadow-sm space-y-8 font-sans">
+        
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-200 gap-4">
+            <div>
+                <h2 class="text-2xl font-black text-slate-900 tracking-tight">InternTrack AI — Career Intelligence Report</h2>
+                <div class="text-xs text-slate-500 mt-1 font-mono">Generated: <span id="rep-date">--</span></div>
+            </div>
+            <div class="text-right">
+                <div id="rep-name" class="font-bold text-slate-900 text-base">--</div>
+                <div id="rep-email" class="text-xs text-slate-400">--</div>
+            </div>
+        </div>
+
+        <!-- Metrics Overview Grid -->
+        <div>
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Application Pipeline Summary</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-center">
+                    <span class="text-[11px] font-semibold text-slate-500">Total Tracked</span>
+                    <span id="rep-total" class="text-2xl font-bold text-slate-900 block mt-1">--</span>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-center">
+                    <span class="text-[11px] font-semibold text-slate-500">Active Pipeline</span>
+                    <span id="rep-active" class="text-2xl font-bold text-brand-600 block mt-1">--</span>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-center">
+                    <span class="text-[11px] font-semibold text-slate-500">Interviews Conducted</span>
+                    <span id="rep-interviews" class="text-2xl font-bold text-indigo-600 block mt-1">--</span>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-center">
+                    <span class="text-[11px] font-semibold text-slate-500">Offers Received</span>
+                    <span id="rep-offers" class="text-2xl font-bold text-emerald-600 block mt-1">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Candidate Profile & Focus -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
+            <div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Target Role & Education</h3>
+                <div class="space-y-1.5 text-xs text-slate-700">
+                    <div><b>Target Role:</b> <span id="rep-target-role">--</span></div>
+                    <div><b>Education:</b> <span id="rep-degree">--</span> at <span id="rep-college">--</span></div>
+                    <div><b>Profile Strength:</b> <span id="rep-completion">--%</span></div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Primary Resume Evaluation</h3>
+                <div class="space-y-1.5 text-xs text-slate-700">
+                    <div><b>File:</b> <span id="rep-resume-file">--</span></div>
+                    <div><b>InternTrack Match Score:</b> <span id="rep-resume-score" class="font-bold text-brand-600">--/100</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Skills Covered -->
+        <div class="pt-4 border-t border-slate-100">
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Verified Skills</h3>
+            <div id="rep-skills-container" class="flex flex-wrap gap-1.5 text-xs">
+                <span class="text-slate-400">Loading skills...</span>
+            </div>
+        </div>
+
+        <!-- Recent Applications Table -->
+        <div class="pt-4 border-t border-slate-100">
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Applications In Pipeline</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-500 border-b border-slate-200">
+                            <th class="py-2.5 px-3">Company</th>
+                            <th class="py-2.5 px-3">Role</th>
+                            <th class="py-2.5 px-3">Status</th>
+                            <th class="py-2.5 px-3">Applied</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rep-apps-body" class="divide-y divide-slate-100 text-slate-700">
+                        <tr><td colspan="4" class="py-4 text-center text-slate-400">Loading applications...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        loadReportData();
+    });
+
+    async function loadReportData() {
+        try {
+            const res = await api.get('/api/core/report/');
+            if (!res.ok) return;
+            const rep = await res.json();
+
+            document.getElementById('rep-date').textContent = rep.generated_at;
+            document.getElementById('rep-name').textContent = rep.candidate_name;
+            document.getElementById('rep-email').textContent = rep.email;
+
+            document.getElementById('rep-total').textContent = rep.metrics.total_applications;
+            document.getElementById('rep-active').textContent = rep.metrics.active_applications;
+            document.getElementById('rep-interviews').textContent = rep.metrics.interviews;
+            document.getElementById('rep-offers').textContent = rep.metrics.offers;
+
+            document.getElementById('rep-target-role').textContent = rep.target_role;
+            document.getElementById('rep-degree').textContent = rep.degree;
+            document.getElementById('rep-college').textContent = rep.college;
+            document.getElementById('rep-completion').textContent = `${rep.profile_completion}%`;
+
+            document.getElementById('rep-resume-file').textContent = rep.primary_resume.file_name;
+            document.getElementById('rep-resume-score').textContent = `${rep.primary_resume.match_score}/100`;
+
+            const skillsEl = document.getElementById('rep-skills-container');
+            if (rep.skills && rep.skills.length) {
+                skillsEl.innerHTML = rep.skills.map(s => `
+                    <span class="px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-medium">
+                        ${s}
+                    </span>
+                `).join('');
+            } else {
+                skillsEl.innerHTML = `<span class="text-xs text-slate-400">No skills explicitly added.</span>`;
+            }
+
+            const tbody = document.getElementById('rep-apps-body');
+            if (rep.recent_applications && rep.recent_applications.length) {
+                tbody.innerHTML = rep.recent_applications.map(a => `
+                    <tr>
+                        <td class="py-2.5 px-3 font-bold">${a.company}</td>
+                        <td class="py-2.5 px-3">${a.title}</td>
+                        <td class="py-2.5 px-3 font-semibold">${a.status}</td>
+                        <td class="py-2.5 px-3 text-slate-500">${a.applied_date}</td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-slate-400">No applications in pipeline.</td></tr>`;
+            }
+
+        } catch (e) {
+            console.error('Error fetching report data:', e);
+        }
+    }
+</script>
+{% endblock %}

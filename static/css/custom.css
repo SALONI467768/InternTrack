@@ -1,0 +1,431 @@
+/* InternTrack AI - Custom UI Theme */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+
+/* =========================================================
+   COLOR SYSTEM
+   ========================================================= */
+
+:root {
+    --primary: #6C63FF;
+    --primary-dark: #5148D8;
+
+    --secondary: #20243A;
+    --secondary-light: #282C48;
+
+    --accent: #F59E7A;
+
+    --surface: #282C48;
+    --surface-light: #303452;
+
+    --bg-light: #20243A;
+
+    --border: #3A3D5A;
+
+    --text-main: #F8F8FC;
+    --text-muted: #A7A9BC;
+
+    --success: #3FAE7A;
+    --warning: #E9A23B;
+    --danger: #D95D6A;
+}
+
+
+/* =========================================================
+   BASE
+   ========================================================= */
+
+html {
+    background-color: var(--secondary);
+}
+
+body {
+    font-family:
+        'Plus Jakarta Sans',
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        sans-serif;
+
+    color: var(--text-main);
+    background-color: var(--secondary);
+
+    margin: 0;
+}
+
+
+/* =========================================================
+   CODE
+   ========================================================= */
+
+code,
+pre,
+.font-mono {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+
+/* =========================================================
+   GLOBAL PAGE BACKGROUND
+   ========================================================= */
+
+section,
+main,
+header,
+footer {
+    background-color: var(--secondary);
+}
+
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+.glass-nav {
+    background: rgba(32, 36, 58, 0.96);
+
+    backdrop-filter: blur(14px);
+
+    border-bottom: 1px solid var(--border);
+}
+
+
+/* =========================================================
+   GLASS PANEL
+   ========================================================= */
+
+.glass-panel {
+    background: rgba(40, 44, 72, 0.95);
+
+    backdrop-filter: blur(10px);
+
+    border: 1px solid var(--border);
+}
+
+
+/* =========================================================
+   CARDS
+   ========================================================= */
+
+.saas-card {
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: 14px;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.saas-card:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 10px 25px rgba(0, 0, 0, 0.18);
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.btn-primary {
+    background: var(--primary);
+
+    color: #FFFFFF;
+
+    border: none;
+
+    border-radius: 9px;
+
+    transition: 0.2s ease;
+}
+
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+
+    transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   PROGRESS
+   ========================================================= */
+
+.progress-fill {
+    background: var(--primary);
+
+    transition:
+        width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+
+::-webkit-scrollbar-track {
+    background: #20243A;
+}
+
+
+::-webkit-scrollbar-thumb {
+    background: #4A4D6A;
+
+    border-radius: 9999px;
+}
+
+
+::-webkit-scrollbar-thumb:hover {
+    background: #5A5D7A;
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.sidebar-link {
+    color: var(--text-muted);
+
+    border-radius: 8px;
+
+    transition: 0.2s ease;
+}
+
+
+.sidebar-link:hover {
+    background: rgba(108, 99, 255, 0.12);
+
+    color: var(--primary);
+}
+
+
+.sidebar-link.active {
+    background-color: rgba(108, 99, 255, 0.18);
+
+    color: var(--primary);
+
+    font-weight: 600;
+
+    border-left: 3px solid var(--primary);
+}
+
+
+/* =========================================================
+   TAILWIND BACKGROUND OVERRIDES
+   ========================================================= */
+
+/* White sections */
+.bg-white {
+    background-color: var(--secondary) !important;
+}
+
+
+/* Light sections */
+.bg-slate-50 {
+    background-color: var(--secondary) !important;
+}
+
+
+/* Dark sections */
+.bg-slate-900 {
+    background-color: var(--secondary) !important;
+}
+
+
+.bg-slate-950 {
+    background-color: #191C2D !important;
+}
+
+
+/* =========================================================
+   CARD BACKGROUNDS
+   ========================================================= */
+
+.bg-white.p-6,
+.bg-white.p-5,
+.bg-slate-50.p-5 {
+    background-color: var(--surface) !important;
+}
+
+
+/* =========================================================
+   BRAND COLORS
+   ========================================================= */
+
+.bg-brand-500,
+.bg-brand-600 {
+    background-color: var(--primary) !important;
+}
+
+
+.text-brand-300,
+.text-brand-400,
+.text-brand-500,
+.text-brand-600 {
+    color: var(--primary) !important;
+}
+
+
+/* =========================================================
+   TEXT COLORS
+   ========================================================= */
+
+.text-slate-900 {
+    color: var(--text-main) !important;
+}
+
+
+.text-slate-600 {
+    color: #C8C9D8 !important;
+}
+
+
+.text-slate-500 {
+    color: var(--text-muted) !important;
+}
+
+
+.text-slate-400 {
+    color: var(--text-muted) !important;
+}
+
+
+.text-slate-300 {
+    color: #D7D8E4 !important;
+}
+
+
+.text-white {
+    color: #FFFFFF !important;
+}
+
+
+/* =========================================================
+   BORDERS
+   ========================================================= */
+
+.border-slate-200 {
+    border-color: var(--border) !important;
+}
+
+
+.border-slate-700 {
+    border-color: var(--border) !important;
+}
+
+
+.border-slate-800 {
+    border-color: var(--border) !important;
+}
+
+
+/* =========================================================
+   HOVER BACKGROUNDS
+   ========================================================= */
+
+.hover\:bg-slate-800:hover {
+    background-color: var(--surface-light) !important;
+}
+
+
+.hover\:bg-brand-500:hover {
+    background-color: var(--primary-dark) !important;
+}
+
+
+/* =========================================================
+   HERO BUTTON SHADOW
+   ========================================================= */
+
+.shadow-brand-600\/30 {
+    box-shadow:
+        0 10px 25px rgba(108, 99, 255, 0.30) !important;
+}
+
+
+/* =========================================================
+   BADGES
+   ========================================================= */
+
+.badge-pulse {
+    animation: none;
+}
+
+
+/* =========================================================
+   SELECTION
+   ========================================================= */
+
+::selection {
+    background: var(--primary);
+    color: #FFFFFF;
+}
+
+
+/* =========================================================
+   LINKS
+   ========================================================= */
+
+a {
+    transition:
+        color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+footer {
+    background-color: #191C2D !important;
+
+    border-color: var(--border) !important;
+}
+
+
+/* =========================================================
+   TABLE / FORM ELEMENTS
+   ========================================================= */
+
+input,
+textarea,
+select {
+    background-color: var(--surface);
+
+    color: var(--text-main);
+
+    border-color: var(--border);
+}
+
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--text-muted);
+}
+
+
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--primary);
+
+    outline: none;
+
+    box-shadow:
+        0 0 0 3px rgba(108, 99, 255, 0.15);
+}

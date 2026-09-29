@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block title %}Application Details — InternTrack AI{% endblock %}
+{% block header_title %}Application Details{% endblock %}
+{% block header_subtitle %}Full timeline, follow-up scheduling, and interview records{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-5xl">
+    
+    <!-- Header Card -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-2 mb-1">
+                <h2 id="app-company" class="text-2xl font-extrabold text-slate-900 tracking-tight">--</h2>
+                <span id="app-status-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold border">--</span>
+            </div>
+            <div id="app-job-title" class="text-sm font-semibold text-brand-600">--</div>
+            <div id="app-metadata" class="text-xs text-slate-500 mt-2 flex flex-wrap gap-4">
+                <span><i data-lucide="map-pin" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i><span id="meta-location">--</span></span>
+                <span><i data-lucide="clock" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i><span id="meta-type">--</span></span>
+                <span><i data-lucide="dollar-sign" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i><span id="meta-salary">--</span></span>
+                <span><i data-lucide="calendar" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i>Applied: <span id="meta-applied">--</span></span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+            <a id="btn-job-posting" href="#" target="_blank" class="hidden px-3.5 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-semibold">
+                <i data-lucide="external-link" class="w-3.5 h-3.5 inline mr-1"></i> Job Link
+            </a>
+            <button onclick="deleteApplication()" class="px-3.5 py-2 border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-semibold">
+                Delete
+            </button>
+        </div>
+    </div>
+
+    <!-- Timeline & Notes Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Status History Timeline -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2">
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <i data-lucide="git-commit" class="w-4 h-4 text-brand-600"></i>
+                <span>Application Timeline & Stage Progression</span>
+            </h3>
+
+            <div id="timeline-container" class="space-y-4 border-l-2 border-slate-100 ml-3 pl-5 relative">
+                <div class="text-xs text-slate-400">Loading history...</div>
+            </div>
+        </div>
+
+        <!-- Follow-Up Scheduler Card -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <i data-lucide="bell" class="w-4 h-4 text-amber-500"></i>
+                <span>Follow-Up Reminders</span>
+            </h3>
+
+            <!-- Schedule Followup Form -->
+            <form onsubmit="submitFollowUp(event)" class="space-y-3 mb-6 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Follow-Up Date</label>
+                    <input id="fu-date" type="date" required class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Action Note</label>
+                    <input id="fu-notes" type="text" placeholder="e.g. Email recruiter regarding status" class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                </div>
+                <button type="submit" class="w-full py-1.5 px-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs rounded-lg transition-colors">
+                    Schedule Follow-up
+                </button>
+            </form>
+
+            <!-- Followups list -->
+            <div id="followups-list" class="space-y-2 flex-1 overflow-y-auto max-h-48 text-xs">
+                <div class="text-slate-400">No follow-ups recorded.</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const applicationId = "{{ application_id }}";
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadApplicationDetail();
+    });
+
+    async function loadApplicationDetail() {
+        try {
+            const res = await api.get(`/api/applications/${applicationId}/`);
+            if (!res.ok) {
+                showToast('Failed to load application details', 'error');
+                return;
+            }
+            const app = await res.json();
+
+            // Populate header
+            document.getElementById('app-company').textContent = app.job_details.company;
+            document.getElementById('app-job-title').textContent = app.job_details.title;
+            document.getElementById('meta-location').textContent = app.job_details.location;
+            document.getElementById('meta-type').textContent = app.job_details.employment_type === 'INTERNSHIP' ? 'Internship' : 'Full-Time';
+            document.getElementById('meta-salary').textContent = app.job_details.salary_range || 'Not specified';
+            document.getElementById('meta-applied').textContent = app.applied_date || 'Saved';
+
+            const statusBadge = document.getElementById('app-status-badge');
+            statusBadge.textContent = app.status_display;
+
+            if (app.job_details.job_url) {
+                const btn = document.getElementById('btn-job-posting');
+                btn.href = app.job_details.job_url;
+                btn.classList.remove('hidden');
+            }
+
+            // Render Timeline
+            renderTimeline(app.history);
+
+            // Render Follow-ups
+            renderFollowUps(app.follow_ups);
+            lucide.createIcons();
+        } catch (e) {
+            console.error('Error fetching application details:', e);
+        }
+    }
+
+    function renderTimeline(historyList) {
+        const container = document.getElementById('timeline-container');
+        if (!container) return;
+
+        if (!historyList || historyList.length === 0) {
+            container.innerHTML = `<div class="text-xs text-slate-400">No status transitions recorded yet.</div>`;
+            return;
+        }
+
+        container.innerHTML = historyList.map(item => `
+            <div class="relative mb-4">
+                <div class="absolute -left-[27px] top-1 w-3.5 h-3.5 rounded-full bg-brand-600 ring-4 ring-white"></div>
+                <div class="text-xs font-bold text-slate-900">Stage: ${item.to_status}</div>
+                <div class="text-[11px] text-slate-400 font-mono">${new Date(item.changed_at).toLocaleString()}</div>
+                ${item.notes ? `<div class="text-xs text-slate-600 mt-1 bg-slate-50 p-2 rounded-lg border border-slate-100">${item.notes}</div>` : ''}
+            </div>
+        `).join('');
+    }
+
+    function renderFollowUps(fuList) {
+        const listEl = document.getElementById('followups-list');
+        if (!listEl) return;
+
+        if (!fuList || fuList.length === 0) {
+            listEl.innerHTML = `<div class="text-xs text-slate-400">No follow-ups scheduled yet.</div>`;
+            return;
+        }
+
+        listEl.innerHTML = fuList.map(fu => `
+            <div class="p-2.5 rounded-lg border border-slate-100 ${fu.is_completed ? 'bg-slate-50 opacity-60' : 'bg-white shadow-xs'}">
+                <div class="flex items-center justify-between text-xs">
+                    <span class="font-bold text-slate-800">${fu.follow_up_date}</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded font-mono ${fu.is_completed ? 'bg-slate-200 text-slate-600' : 'bg-amber-100 text-amber-800'}">${fu.is_completed ? 'Done' : 'Pending'}</span>
+                </div>
+                ${fu.notes ? `<div class="text-[11px] text-slate-500 mt-1">${fu.notes}</div>` : ''}
+            </div>
+        `).join('');
+    }
+
+    async function submitFollowUp(event) {
+        event.preventDefault();
+        const date = document.getElementById('fu-date').value;
+        const notes = document.getElementById('fu-notes').value;
+
+        try {
+            const res = await api.post('/api/applications/follow-ups/', {
+                application: applicationId,
+                follow_up_date: date,
+                notes: notes
+            });
+            if (res.ok) {
+                showToast('Follow-up scheduled!', 'success');
+                document.getElementById('fu-notes').value = '';
+                loadApplicationDetail();
+            } else {
+                showToast('Failed to schedule follow-up', 'error');
+            }
+        } catch (e) {
+            showToast('Network error scheduling follow-up', 'error');
+        }
+    }
+
+    async function deleteApplication() {
+        if (!confirm('Are you sure you want to delete this application record?')) return;
+        try {
+            const res = await api.delete(`/api/applications/${applicationId}/`);
+            if (res.ok) {
+                showToast('Application deleted.', 'info');
+                setTimeout(() => window.location.href = '/applications/', 400);
+            }
+        } catch (e) {
+            showToast('Failed to delete application', 'error');
+        }
+    }
+</script>
+{% endblock %}

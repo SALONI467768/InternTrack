@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block title %}Funnel Analytics — InternTrack AI{% endblock %}
+{% block header_title %}Career Analytics & Conversion Funnel{% endblock %}
+{% block header_subtitle %}Data-driven metrics and transparent conversion formulas across all tracked positions{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-6xl">
+
+    <!-- Funnel Visualization Card -->
+    <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+            <div>
+                <h3 class="text-base font-bold text-slate-900">Application Conversion Funnel</h3>
+                <p class="text-xs text-slate-500">Stage-by-stage attrition and conversion percentages</p>
+            </div>
+            <div class="text-[11px] text-brand-700 bg-brand-50 border border-brand-200 px-3 py-1 rounded-lg font-mono">
+                Calculated live from database records
+            </div>
+        </div>
+
+        <div id="analytics-funnel-grid" class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+            <div class="col-span-5 text-center text-xs text-slate-400 py-6">Loading funnel metrics...</div>
+        </div>
+
+        <!-- Formulas Legend -->
+        <div class="mt-8 pt-6 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <span class="font-bold text-slate-700 block mb-1">Response Rate Formula</span>
+                <span class="font-mono text-[11px] text-slate-500">(Assessments + Interviews + Offers + Rejected) ÷ Actioned × 100</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <span class="font-bold text-slate-700 block mb-1">Interview Rate Formula</span>
+                <span class="font-mono text-[11px] text-slate-500">(Interviews + Offers) ÷ Actioned Applications × 100</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <span class="font-bold text-slate-700 block mb-1">Offer Conversion Formula</span>
+                <span class="font-mono text-[11px] text-slate-500">Offers ÷ Actioned Applications × 100</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Top Roles Applied -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-1">Applications by Target Role</h3>
+            <p class="text-xs text-slate-500 mb-4">Distribution of job titles in your pipeline</p>
+            <div class="h-64 relative flex items-center justify-center">
+                <canvas id="rolesChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Top Companies Applied -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-1">Top Tracked Companies</h3>
+            <p class="text-xs text-slate-500 mb-4">Organizations with the most tracked opportunities</p>
+            <div class="h-64 relative flex items-center justify-center">
+                <canvas id="companiesChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Activity Log Audit Timeline -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-1 flex items-center gap-2">
+            <i data-lucide="clock" class="w-4 h-4 text-brand-600"></i>
+            <span>Activity Audit Log</span>
+        </h3>
+        <p class="text-xs text-slate-500 mb-6">Recent user actions and system state changes</p>
+
+        <div id="activity-log-container" class="space-y-3 max-h-96 overflow-y-auto">
+            <div class="text-xs text-slate-400 py-4 text-center">Loading audit logs...</div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let rolesChartInstance = null;
+    let companiesChartInstance = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadAnalyticsData();
+        loadActivityLogs();
+    });
+
+    async function loadAnalyticsData() {
+        try {
+            const res = await api.get('/api/analytics/dashboard/');
+            if (!res.ok) return;
+            const data = await res.json();
+
+            // Render Funnel
+            const funnelEl = document.getElementById('analytics-funnel-grid');
+            const colors = ['bg-slate-50 border-slate-200', 'bg-brand-50 border-brand-200', 'bg-sky-50 border-sky-200', 'bg-purple-50 border-purple-200', 'bg-emerald-50 border-emerald-200'];
+            
+            funnelEl.innerHTML = data.charts.funnel.map((step, idx) => `
+                <div class="p-4 rounded-xl border ${colors[idx % colors.length]} text-center flex flex-col justify-center">
+                    <span class="text-xs font-semibold text-slate-600">${step.stage}</span>
+                    <span class="text-3xl font-extrabold text-slate-900 mt-1">${step.count}</span>
+                    <span class="text-xs font-mono text-slate-500 mt-1">${step.percentage}%</span>
+                </div>
+            `).join('');
+
+            // Render Roles Chart
+            renderRolesChart(data.charts.roles);
+            renderCompaniesChart(data.charts.companies);
+
+        } catch (e) {
+            console.error('Error fetching analytics:', e);
+        }
+    }
+
+    function renderRolesChart(roleData) {
+        const ctx = document.getElementById('rolesChart');
+        if (!ctx) return;
+        if (rolesChartInstance) rolesChartInstance.destroy();
+
+        rolesChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: roleData.labels.length ? roleData.labels : ['No roles'],
+                datasets: [{
+                    label: 'Applications',
+                    data: roleData.data.length ? roleData.data : [0],
+                    backgroundColor: '#3B82F6',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } },
+                    x: { ticks: { font: { size: 10 } } }
+                }
+            }
+        });
+    }
+
+    function renderCompaniesChart(companyData) {
+        const ctx = document.getElementById('companiesChart');
+        if (!ctx) return;
+        if (companiesChartInstance) companiesChartInstance.destroy();
+
+        companiesChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: companyData.labels.length ? companyData.labels : ['No companies'],
+                datasets: [{
+                    label: 'Positions',
+                    data: companyData.data.length ? companyData.data : [0],
+                    backgroundColor: '#10B981',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } },
+                    x: { ticks: { font: { size: 10 } } }
+                }
+            }
+        });
+    }
+
+    async function loadActivityLogs() {
+        try {
+            const res = await api.get('/api/analytics/activity/');
+            if (!res.ok) return;
+            const data = await res.json();
+            const container = document.getElementById('activity-log-container');
+
+            if (!data.logs || data.logs.length === 0) {
+                container.innerHTML = `<div class="text-xs text-slate-400 py-3 text-center">No recent activity recorded.</div>`;
+                return;
+            }
+
+            container.innerHTML = data.logs.map(log => `
+                <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center justify-between text-xs">
+                    <div>
+                        <span class="font-bold text-slate-800">${log.action}</span>
+                        <span class="text-slate-500 ml-2">${log.details}</span>
+                    </div>
+                    <span class="text-[11px] text-slate-400 font-mono shrink-0 ml-4">${log.created_at}</span>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        } catch (e) {
+            console.error('Error fetching activity logs:', e);
+        }
+    }
+</script>
+{% endblock %}

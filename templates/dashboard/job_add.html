@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Track & Parse Job — InternTrack AI{% endblock %}
+{% block header_title %}Job Description Analyzer{% endblock %}
+{% block header_subtitle %}Paste any raw job posting to extract required skills and track application requirements{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl space-y-6">
+
+    <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+        <form onsubmit="submitJobParse(event)" class="space-y-6">
+            
+            <!-- Paste Description Area -->
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <label for="raw_text" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Job Description Text <span class="text-rose-500">*</span>
+                    </label>
+                    <span class="text-xs text-slate-400">Copy & paste from LinkedIn, Indeed, or career pages</span>
+                </div>
+                <textarea id="raw_text" name="raw_text" rows="10" required
+                          placeholder="Paste full job description here (e.g. 'We are seeking a Python Backend Developer with experience in Django, PostgreSQL, and building RESTful APIs...')"
+                          class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono leading-relaxed"></textarea>
+            </div>
+
+            <!-- Optional Hints Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2 border-t border-slate-100">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Company (Optional)</label>
+                    <input id="job-company" type="text" placeholder="Auto-detected if left empty"
+                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Job Title (Optional)</label>
+                    <input id="job-title" type="text" placeholder="Auto-detected if left empty"
+                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Job URL / Link</label>
+                    <input id="job-url" type="url" placeholder="https://..."
+                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Location</label>
+                    <input id="job-location" type="text" placeholder="e.g. Remote, San Francisco"
+                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Employment Type</label>
+                    <select id="job-type" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500">
+                        <option value="INTERNSHIP">Internship</option>
+                        <option value="FULL_TIME">Full-time</option>
+                        <option value="PART_TIME">Part-time</option>
+                        <option value="CONTRACT">Contract</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Submit Action -->
+            <div class="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
+                <a href="/jobs/" class="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50">Cancel</a>
+                <button type="submit" id="parse-btn"
+                        class="inline-flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-brand-600/30 transition-all">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    <span>Analyze & Track Role</span>
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    async function submitJobParse(event) {
+        event.preventDefault();
+        const btn = document.getElementById('parse-btn');
+        const raw_text = document.getElementById('raw_text').value.trim();
+        const company = document.getElementById('job-company').value.trim();
+        const title = document.getElementById('job-title').value.trim();
+        const job_url = document.getElementById('job-url').value.trim();
+        const location = document.getElementById('job-location').value.trim();
+        const employment_type = document.getElementById('job-type').value;
+
+        if (raw_text.length < 30) {
+            showToast('Please provide a complete job description.', 'warning');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Analyzing requirements with AI...</span>`;
+        lucide.createIcons();
+
+        try {
+            const res = await api.post('/api/jobs/parse-and-create/', {
+                raw_text,
+                company,
+                title,
+                job_url,
+                location,
+                employment_type
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                showToast(`Extracted requirements for ${data.title} at ${data.company}!`, 'success');
+                setTimeout(() => window.location.href = `/jobs/${data.id}/`, 600);
+            } else {
+                showToast('Failed to analyze job description', 'error');
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4"></i><span>Analyze & Track Role</span>`;
+                lucide.createIcons();
+            }
+        } catch (e) {
+            showToast('Error connecting to backend parser', 'error');
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4"></i><span>Analyze & Track Role</span>`;
+            lucide.createIcons();
+        }
+    }
+</script>
+{% endblock %}

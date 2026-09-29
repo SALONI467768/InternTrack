@@ -1,0 +1,398 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard — InternTrack AI{% endblock %}
+{% block header_title %}Career Intelligence Dashboard{% endblock %}
+{% block header_subtitle %}Live metrics calculated directly from your applications and tracked jobs{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- Top KPI Cards Row -->
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm col-span-2 sm:col-span-1">
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Tracked</div>
+            <div id="kpi-total" class="text-2xl font-bold text-slate-900 mt-1">--</div>
+            <div class="text-[11px] text-slate-400 mt-1">Applications in DB</div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm col-span-2 sm:col-span-1">
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Pipeline</div>
+            <div id="kpi-active" class="text-2xl font-bold text-brand-600 mt-1">--</div>
+            <div class="text-[11px] text-brand-500 mt-1 font-medium">Applied & In-Progress</div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm col-span-2 sm:col-span-1">
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Interviews</div>
+            <div id="kpi-interviews" class="text-2xl font-bold text-indigo-600 mt-1">--</div>
+            <div class="text-[11px] text-indigo-500 mt-1">Rounds Scheduled</div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm col-span-2 sm:col-span-1">
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Offers</div>
+            <div id="kpi-offers" class="text-2xl font-bold text-emerald-600 mt-1">--</div>
+            <div class="text-[11px] text-emerald-500 mt-1 font-semibold">Offer Received 🎉</div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm col-span-2 sm:col-span-1">
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Rejected</div>
+            <div id="kpi-rejected" class="text-2xl font-bold text-slate-600 mt-1">--</div>
+            <div class="text-[11px] text-slate-400 mt-1">Closed Applications</div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm col-span-2 sm:col-span-1" title="Formula: Progressed Applications / Submitted × 100">
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Response Rate</div>
+            <div id="kpi-response-rate" class="text-2xl font-bold text-sky-600 mt-1">--%</div>
+            <div class="text-[10px] text-slate-400 mt-1 font-mono">Progressed / Applied</div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm col-span-2 sm:col-span-1" title="Formula: (Interviews + Offers) / Submitted × 100">
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Interview Rate</div>
+            <div id="kpi-interview-rate" class="text-2xl font-bold text-purple-600 mt-1">--%</div>
+            <div class="text-[10px] text-slate-400 mt-1 font-mono">Interview / Applied</div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm col-span-2 sm:col-span-1">
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Avg Response</div>
+            <div id="kpi-avg-days" class="text-2xl font-bold text-amber-600 mt-1">--d</div>
+            <div class="text-[10px] text-slate-400 mt-1 font-mono">Days to 1st Reply</div>
+        </div>
+    </div>
+
+    <!-- Smart Daily Actions Section -->
+    <div class="bg-gradient-to-r from-brand-900 to-slate-900 rounded-2xl p-6 text-white shadow-md">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+                <span class="p-1.5 rounded-lg bg-brand-500/20 text-brand-300">
+                    <i data-lucide="zap" class="w-4 h-4"></i>
+                </span>
+                <h2 class="text-base font-bold tracking-tight">Today's Career Actions</h2>
+                <span class="text-xs text-brand-300/80 font-normal">Data-driven priorities for today</span>
+            </div>
+            <span id="daily-actions-count" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-brand-500/30 text-brand-200">0 Actions</span>
+        </div>
+        <div id="daily-actions-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="text-xs text-slate-400 py-3">Loading daily priorities...</div>
+        </div>
+    </div>
+
+    <!-- Charts Row: Monthly Pipeline & Funnel Breakdown -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Monthly Trends Chart -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">Application Pipeline Velocity</h3>
+                    <p class="text-xs text-slate-500">Monthly trend of applications tracked over time</p>
+                </div>
+            </div>
+            <div class="h-64 relative">
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Status Breakdown Doughnut Chart -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">Applications by Status</h3>
+                    <p class="text-xs text-slate-500">Live breakdown by funnel stage</p>
+                </div>
+            </div>
+            <div class="h-64 relative flex items-center justify-center">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Funnel & Conversion Formula Bar -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+            <div>
+                <h3 class="text-base font-bold text-slate-900">Conversion Funnel Architecture</h3>
+                <p class="text-xs text-slate-500">Tracks how effectively your applications advance through interview stages</p>
+            </div>
+            <div class="text-xs text-slate-500 font-mono bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                Formula: Stage Count ÷ Tracked Applications × 100
+            </div>
+        </div>
+
+        <div id="funnel-container" class="grid grid-cols-1 sm:grid-cols-5 gap-3 text-center">
+            <!-- Funnel steps dynamically rendered here -->
+        </div>
+    </div>
+
+    <!-- Bottom Row: Recent Applications & AI Quick Insights -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Recent Applications Table -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">Recent Applications</h3>
+                    <p class="text-xs text-slate-500">Latest pipeline updates</p>
+                </div>
+                <a href="/applications/" class="text-xs font-semibold text-brand-600 hover:text-brand-700">View All Applications &rarr;</a>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider">
+                            <th class="py-2.5 px-3">Company & Role</th>
+                            <th class="py-2.5 px-3">Status</th>
+                            <th class="py-2.5 px-3">Applied</th>
+                            <th class="py-2.5 px-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-apps-tbody" class="divide-y divide-slate-100 text-slate-700 font-medium">
+                        <tr><td colspan="4" class="py-6 text-center text-slate-400">Loading recent applications...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- AI Insights Sidebar Card -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="p-1.5 rounded-lg bg-purple-50 text-purple-600">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    </span>
+                    <h3 class="text-base font-bold text-slate-900">AI Career Intelligence</h3>
+                </div>
+            </div>
+            <div id="ai-insights-list" class="space-y-3 flex-1">
+                <div class="text-xs text-slate-400 py-4">Synthesizing personalized observations...</div>
+            </div>
+            <div class="pt-4 border-t border-slate-100 text-right">
+                <a href="/analytics/" class="text-xs font-semibold text-brand-600 hover:text-brand-700">View Comprehensive Analytics &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let monthlyChartInstance = null;
+    let statusChartInstance = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDashboardData();
+        loadDailyActions();
+        loadCareerInsights();
+        loadRecentApplications();
+    });
+
+    async function loadDashboardData() {
+        try {
+            const res = await api.get('/api/analytics/dashboard/');
+            if (!res.ok) return;
+            const data = await res.json();
+            const k = data.kpis;
+
+            // Populate KPIs
+            document.getElementById('kpi-total').textContent = k.total_applications;
+            document.getElementById('kpi-active').textContent = k.active_applications;
+            document.getElementById('kpi-interviews').textContent = k.interviews;
+            document.getElementById('kpi-offers').textContent = k.offers;
+            document.getElementById('kpi-rejected').textContent = k.rejected;
+            document.getElementById('kpi-response-rate').textContent = `${k.response_rate}%`;
+            document.getElementById('kpi-interview-rate').textContent = `${k.interview_rate}%`;
+            document.getElementById('kpi-avg-days').textContent = `${k.avg_response_days}d`;
+
+            // Populate Funnel
+            renderFunnel(data.charts.funnel);
+
+            // Populate Charts
+            renderMonthlyChart(data.charts.monthly);
+            renderStatusChart(data.charts.status);
+        } catch (e) {
+            console.error('Failed to load dashboard metrics:', e);
+        }
+    }
+
+    function renderFunnel(funnelList) {
+        const container = document.getElementById('funnel-container');
+        if (!container || !funnelList) return;
+
+        const colors = ['bg-slate-100 border-slate-200 text-slate-800', 'bg-brand-50 border-brand-200 text-brand-800', 'bg-sky-50 border-sky-200 text-sky-800', 'bg-purple-50 border-purple-200 text-purple-800', 'bg-emerald-50 border-emerald-200 text-emerald-800'];
+        
+        container.innerHTML = funnelList.map((step, idx) => `
+            <div class="p-3.5 rounded-xl border ${colors[idx % colors.length]} flex flex-col items-center justify-center">
+                <span class="text-xs font-semibold opacity-75">${step.stage}</span>
+                <span class="text-xl font-bold mt-1">${step.count}</span>
+                <span class="text-[11px] font-mono mt-0.5 opacity-90">${step.percentage}%</span>
+            </div>
+        `).join('');
+    }
+
+    function renderMonthlyChart(chartData) {
+        const ctx = document.getElementById('monthlyChart');
+        if (!ctx) return;
+        if (monthlyChartInstance) monthlyChartInstance.destroy();
+
+        monthlyChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.labels.length ? chartData.labels : ['Current Month'],
+                datasets: [{
+                    label: 'Applications',
+                    data: chartData.data.length ? chartData.data : [0],
+                    borderColor: '#2563EB',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    tension: 0.35,
+                    fill: true,
+                    pointBackgroundColor: '#2563EB',
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    function renderStatusChart(chartData) {
+        const ctx = document.getElementById('statusChart');
+        if (!ctx) return;
+        if (statusChartInstance) statusChartInstance.destroy();
+
+        statusChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    data: chartData.data,
+                    backgroundColor: ['#94A3B8', '#3B82F6', '#0EA5E9', '#8B5CF6', '#10B981', '#F43F5E', '#CBD5E1'],
+                    borderWidth: 2,
+                    borderColor: '#FFFFFF'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
+                },
+                cutout: '68%'
+            }
+        });
+    }
+
+    async function loadDailyActions() {
+        try {
+            const res = await api.get('/api/learning/daily-actions/');
+            if (!res.ok) return;
+            const data = await res.json();
+            const listEl = document.getElementById('daily-actions-list');
+            const countEl = document.getElementById('daily-actions-count');
+
+            countEl.textContent = `${data.total_actions} Actions`;
+
+            if (data.actions.length === 0) {
+                listEl.innerHTML = `<div class="col-span-4 text-xs text-slate-400 py-3">All caught up! No overdue follow-ups or pending actions today.</div>`;
+                return;
+            }
+
+            listEl.innerHTML = data.actions.map(act => `
+                <a href="${act.action_url}" class="block bg-slate-800/80 hover:bg-slate-800 p-4 rounded-xl border border-slate-700/80 transition-all">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-brand-500/20 text-brand-300 font-mono">${act.badge}</span>
+                        <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-slate-400"></i>
+                    </div>
+                    <div class="text-xs font-bold text-white mb-1">${act.title}</div>
+                    <div class="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">${act.description}</div>
+                </a>
+            `).join('');
+            lucide.createIcons();
+        } catch (e) {
+            console.error('Error loading daily actions:', e);
+        }
+    }
+
+    async function loadCareerInsights() {
+        try {
+            const res = await api.get('/api/analytics/insights/');
+            if (!res.ok) return;
+            const data = await res.json();
+            const listEl = document.getElementById('ai-insights-list');
+
+            if (!data.insights || data.insights.length === 0) {
+                listEl.innerHTML = `<div class="text-xs text-slate-400">Add job descriptions to unlock career insights.</div>`;
+                return;
+            }
+
+            listEl.innerHTML = data.insights.slice(0, 3).map(ins => {
+                const borderColors = {
+                    'SUCCESS': 'border-l-emerald-500 bg-emerald-50/50',
+                    'WARNING': 'border-l-amber-500 bg-amber-50/50',
+                    'INFO': 'border-l-brand-500 bg-brand-50/50',
+                }[ins.type] || 'border-l-slate-400 bg-slate-50';
+
+                return `
+                    <div class="p-3 rounded-lg border-l-4 border text-xs ${borderColors}">
+                        <div class="font-bold text-slate-900 mb-1">${ins.title}</div>
+                        <p class="text-slate-600 text-[11px] leading-relaxed">${ins.body}</p>
+                    </div>
+                `;
+            }).join('');
+        } catch (e) {
+            console.error('Error loading AI insights:', e);
+        }
+    }
+
+    async function loadRecentApplications() {
+        try {
+            const res = await api.get('/api/applications/');
+            if (!res.ok) return;
+            const data = await res.json();
+            const apps = Array.isArray(data) ? data : (data.results || []);
+            const tbody = document.getElementById('recent-apps-tbody');
+
+            if (apps.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400">No applications recorded yet. <a href="/jobs/add/" class="text-brand-600 font-semibold hover:underline">Track your first job</a></td></tr>`;
+                return;
+            }
+
+            const statusColors = {
+                'SAVED': 'bg-slate-100 text-slate-700',
+                'APPLIED': 'bg-brand-50 text-brand-700 border-brand-200',
+                'ASSESSMENT': 'bg-sky-50 text-sky-700 border-sky-200',
+                'INTERVIEW': 'bg-purple-50 text-purple-700 border-purple-200',
+                'OFFER': 'bg-emerald-50 text-emerald-700 border-emerald-200 font-bold',
+                'REJECTED': 'bg-rose-50 text-rose-700 border-rose-200',
+                'WITHDRAWN': 'bg-slate-100 text-slate-600'
+            };
+
+            tbody.innerHTML = apps.slice(0, 5).map(app => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="py-3 px-3">
+                        <div class="font-bold text-slate-900">${app.company}</div>
+                        <div class="text-[11px] text-slate-500">${app.job_title}</div>
+                    </td>
+                    <td class="py-3 px-3">
+                        <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${statusColors[app.status] || 'bg-slate-100 text-slate-700'}">
+                            ${app.status_display}
+                        </span>
+                    </td>
+                    <td class="py-3 px-3 text-[11px] text-slate-500">
+                        ${app.applied_date || 'Bookmarked'}
+                    </td>
+                    <td class="py-3 px-3 text-right">
+                        <a href="/applications/${app.id}/" class="text-brand-600 hover:text-brand-700 font-semibold text-xs">Details &rarr;</a>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            console.error('Error loading recent applications:', e);
+        }
+    }
+</script>
+{% endblock %}

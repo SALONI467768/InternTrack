@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}InternTrack AI — Turn Internship Applications Into Career Intelligence{% endblock %}</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/custom.css">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="h-full flex flex-col antialiased text-slate-800">
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-auto"></div>
+
+    {% block layout %}
+    <!-- Default App Shell Layout -->
+    <div class="flex h-screen overflow-hidden bg-slate-50">
+        
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0 transition-all duration-300 z-30">
+            <!-- Brand Header -->
+            <div class="h-16 flex items-center gap-3 px-6 border-b border-slate-100">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+                    <i data-lucide="compass" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-lg text-slate-900 tracking-tight">InternTrack<span class="text-brand-600">.ai</span></span>
+                    <span class="block text-[10px] uppercase font-semibold text-slate-400 tracking-wider">Career Intelligence</span>
+                </div>
+            </div>
+
+            <!-- Profile Completion Pill -->
+            <div class="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+                <div class="flex items-center justify-between text-xs font-semibold text-slate-600 mb-1.5">
+                    <span>Profile Strength</span>
+                    <span id="sidebar-profile-pct" class="text-brand-600 font-bold">--%</span>
+                </div>
+                <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div id="sidebar-profile-bar" class="bg-gradient-to-r from-brand-500 to-emerald-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Nav Links -->
+            <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+                <a href="/dashboard/" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors" data-route="/dashboard/">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4 text-slate-500"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/applications/" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors" data-route="/applications/">
+                    <i data-lucide="briefcase" class="w-4 h-4 text-slate-500"></i>
+                    <span>Applications</span>
+                </a>
+                <a href="/jobs/" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors" data-route="/jobs/">
+                    <i data-lucide="file-search" class="w-4 h-4 text-slate-500"></i>
+                    <span>Tracked Jobs</span>
+                </a>
+                <a href="/resumes/" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors" data-route="/resumes/">
+                    <i data-lucide="file-text" class="w-4 h-4 text-slate-500"></i>
+                    <span>Resume & Score</span>
+                </a>
+                
+                <div class="pt-3 pb-1 px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Intelligence</div>
+                
+                <a href="/skills/" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors" data-route="/skills/">
+                    <i data-lucide="cpu" class="w-4 h-4 text-slate-500"></i>
+                    <span>Skill Intelligence</span>
+                </a>
+                <a href="/skill-gap/" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors" data-route="/skill-gap/">
+                    <i data-lucide="target" class="w-4 h-4 text-slate-500"></i>
+                    <span>Skill Gap Engine</span>
+                </a>
+                <a href="/analytics/" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors" data-route="/analytics/">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 text-slate-500"></i>
+                    <span>Funnel Analytics</span>
+                </a>
+
+                <div class="pt-3 pb-1 px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Preparation</div>
+
+                <a href="/interviews/" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors" data-route="/interviews/">
+                    <i data-lucide="mic" class="w-4 h-4 text-slate-500"></i>
+                    <span>Interview Hub</span>
+                </a>
+                <a href="/learning/" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors" data-route="/learning/">
+                    <i data-lucide="map" class="w-4 h-4 text-slate-500"></i>
+                    <span>Learning Roadmap</span>
+                </a>
+                <a href="/reports/" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors" data-route="/reports/">
+                    <i data-lucide="download" class="w-4 h-4 text-slate-500"></i>
+                    <span>Career Report (PDF)</span>
+                </a>
+
+                <div class="pt-3 pb-1 px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Account</div>
+
+                <a href="/profile/" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors" data-route="/profile/">
+                    <i data-lucide="user" class="w-4 h-4 text-slate-500"></i>
+                    <span>Profile</span>
+                </a>
+                <a href="/settings/" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors" data-route="/settings/">
+                    <i data-lucide="settings" class="w-4 h-4 text-slate-500"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- User Footer & Logout -->
+            <div class="p-4 border-t border-slate-100 flex items-center justify-between">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div id="user-avatar" class="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-xs uppercase shrink-0">
+                        IT
+                    </div>
+                    <div class="truncate">
+                        <div id="user-display-name" class="text-xs font-semibold text-slate-900 truncate">Candidate</div>
+                        <div id="user-display-email" class="text-[11px] text-slate-400 truncate">student@interntrack.ai</div>
+                    </div>
+                </div>
+                <button onclick="handleLogout()" title="Log Out" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-50 transition-colors">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <!-- Topbar Header -->
+            <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleSidebar()" class="lg:hidden text-slate-500 hover:text-slate-800">
+                        <i data-lucide="menu" class="w-5 h-5"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-lg font-bold text-slate-900 leading-tight">{% block header_title %}Dashboard{% endblock %}</h1>
+                        <p class="text-xs text-slate-500">{% block header_subtitle %}Overview & Key Metrics{% endblock %}</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <!-- Notification Bell -->
+                    <div class="relative">
+                        <a href="/notifications/" class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg relative inline-flex items-center">
+                            <i data-lucide="bell" class="w-5 h-5"></i>
+                            <span id="unread-notif-badge" class="hidden absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-600 ring-2 ring-white"></span>
+                        </a>
+                    </div>
+                    
+                    <!-- Quick Add Action -->
+                    <a href="/jobs/add/" class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-600 text-white text-xs font-semibold hover:bg-brand-700 shadow-sm transition-colors">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        <span>Add Job</span>
+                    </a>
+                </div>
+            </header>
+
+            <!-- Page Body -->
+            <main class="flex-1 overflow-y-auto p-6 md:p-8">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+    {% endblock %}
+
+    <!-- Core Scripts -->
+    <script src="/static/js/api.js"></script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Highlight active sidebar navigation
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                const route = link.getAttribute('data-route');
+                if (currentPath === route || (route !== '/dashboard/' && currentPath.startsWith(route))) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Hydrate User Session Info
+            const user = api.getUser();
+            if (user) {
+                const nameEl = document.getElementById('user-display-name');
+                const emailEl = document.getElementById('user-display-email');
+                const avatarEl = document.getElementById('user-avatar');
+                if (nameEl) nameEl.textContent = user.full_name || 'Candidate';
+                if (emailEl) emailEl.textContent = user.email || '';
+                if (avatarEl) avatarEl.textContent = (user.full_name || user.email || 'IT').substring(0, 2).toUpperCase();
+
+                // Fetch current user stats & profile completion
+                fetchProfileCompletion();
+                fetchUnreadNotificationsCount();
+            }
+        });
+
+        async function fetchProfileCompletion() {
+            try {
+                const res = await api.get('/api/profile/');
+                if (res.ok) {
+                    const data = await res.json();
+                    const pct = data.completion_percentage || 20;
+                    const pctEl = document.getElementById('sidebar-profile-pct');
+                    const barEl = document.getElementById('sidebar-profile-bar');
+                    if (pctEl) pctEl.textContent = `${pct}%`;
+                    if (barEl) barEl.style.width = `${pct}%`;
+                }
+            } catch (e) {
+                console.error('Error fetching profile completion:', e);
+            }
+        }
+
+        async function fetchUnreadNotificationsCount() {
+            try {
+                const res = await api.get('/api/notifications/?unread=true');
+                if (res.ok) {
+                    const list = await res.json();
+                    const count = Array.isArray(list) ? list.length : (list.results ? list.results.length : 0);
+                    const badge = document.getElementById('unread-notif-badge');
+                    if (badge) {
+                        if (count > 0) badge.classList.remove('hidden');
+                        else badge.classList.add('hidden');
+                    }
+                }
+            } catch (e) {
+                console.error('Error fetching notifications:', e);
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await api.post('/api/auth/logout/', { refresh: api.getRefreshToken() });
+            } catch (e) {}
+            api.clearSession();
+            window.location.href = '/login/?logged_out=1';
+        }
+
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            if (sb) sb.classList.toggle('-translate-x-full');
+        }
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
